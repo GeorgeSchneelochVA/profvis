@@ -55,7 +55,24 @@ build_srcfile_cache <- function(pkgs = loadedNamespaces()) {
   srcfile_cache <- new.env(parent = emptyenv())
 
   lapply(pkgs, function(pkg) {
-    srcrefs <- get_pkg_srcrefs(pkg)
+    tryCatch({
+      env_root <- rprojroot::find_root(".env", ".")
+      message("Reading .env at ", env_root)
+
+      readRenviron(paste(env_root, "/.env", sep=""))
+      rm(env_root)
+    }, error = function(cond) {
+      message(paste(cond, "\n"))
+      invisible(NULL)
+    })
+
+    srcrefs <- c()
+    tryCatch({
+      srcrefs <- get_pkg_srcrefs(pkg)
+    }, error = function(cond) {
+      message(paste(cond, "\n"))
+      invisible(NULL)
+    })
     if (length(srcrefs) > 0)
       list2env(srcrefs, srcfile_cache)
   })
